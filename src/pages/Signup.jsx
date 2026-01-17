@@ -1,10 +1,9 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext.jsx";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext.jsx";
+import { apiFetch } from "../services/api";
 
 export default function Signup() {
-  const { login } = useAuth();
   const { darkMode } = useTheme();
   const navigate = useNavigate();
 
@@ -16,234 +15,198 @@ export default function Signup() {
   });
 
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSignup = (e) => {
-    e.preventDefault();
+  /* AUTO LOGIN CHECK */
+  useEffect(() => {
+    if (localStorage.getItem("studentToken")) {
+      navigate("/exams", { replace: true });
+    }
+  }, [navigate]);
 
-    if (!form.name || !form.email || !form.password || !form.confirm)
-      return setError("All fields are required ❗");
+  /* INPUT HANDLER */
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+    setError("");
+  };
+
+  /* VALIDATION */
+  const validate = () => {
+    if (Object.values(form).some(v => !v.trim()))
+      return "All fields are required";
+
+    if (!/\S+@\S+\.\S+/.test(form.email))
+      return "Invalid email address";
+
+    if (form.password.length < 6)
+      return "Password must be at least 6 characters";
 
     if (form.password !== form.confirm)
-      return setError("Passwords do not match ❌");
+      return "Passwords do not match";
 
-    const store = JSON.parse(localStorage.getItem("students") || "[]");
+    return null;
+  };
 
-    if (store.find((u) => u.email === form.email))
-      return setError("This email already exists ⚠");
+  /* SUBMIT */
+  const handleSignup = async (e) => {
+    e.preventDefault();
 
-    const newUser = { name: form.name, email: form.email, password: form.password };
+    const msg = validate();
+    if (msg) return setError(msg);
 
-    localStorage.setItem("students", JSON.stringify([...store, newUser]));
-    localStorage.setItem("studentUser", JSON.stringify(newUser));
+    setLoading(true);
 
-    login(newUser);
-    navigate("/dashboard");
+    try {
+      const data = await apiFetch("/auth/register", {
+        method: "POST",
+        body: JSON.stringify({
+          name: form.name.trim(),
+          email: form.email.toLowerCase().trim(),
+          password: form.password,
+        }),
+      });
+
+      if (!data?.token) throw new Error("Registration failed");
+
+      localStorage.setItem("studentToken", data.token);
+      if (data.user)
+        localStorage.setItem("studentUser", JSON.stringify(data.user));
+
+      navigate(data.user?.role === "admin" ? "/admin/dashboard" : "/exams");
+    } catch (err) {
+      setError(err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <>
       <style>{`
-        .wrapper {
-          width: 100vw;
-          height: 100vh;
-          display: flex;
-          justify-content: center;
-          align-items: center;
+        body { margin:0 }
+
+        .page {
+          min-height: 100vh;
+          display:flex;
+          justify-content:center;
+          align-items:center;
           background: ${
             darkMode
-              ? "#0B0F15"
-              : "linear-gradient(120deg,#fff,#ffe9ec,#ffd8de)"
+              ? "radial-gradient(circle at top,#1b1f2a,#0b0f15)"
+              : "linear-gradient(135deg,#ffe5ec,#fcd5ce,#fae1dd)"
           };
         }
 
-        * {
-          -webkit-tap-highlight-color: transparent;
+        .card {
+          width:360px;
+          padding:36px;
+          border-radius:18px;
+          background: ${
+            darkMode
+              ? "rgba(255,255,255,0.06)"
+              : "rgba(255,255,255,0.75)"
+          };
+          backdrop-filter: blur(14px);
+          box-shadow: 0 20px 50px rgba(0,0,0,.25);
+          animation: pop .4s ease;
+        }
+
+        @keyframes pop {
+          from { transform: scale(.95); opacity:0 }
+          to { transform: scale(1); opacity:1 }
+        }
+
+        h1 {
+          text-align:center;
+          margin-bottom:26px;
+          color:${darkMode ? "#fff" : "#E63946"};
+        }
+
+        .group {
+          margin-bottom:20px;
         }
 
         input {
-          appearance: none;
-          outline: none;
-          border: none;
-          background: transparent;
+          width:100%;
+          padding:14px;
+          border-radius:10px;
+          border:1px solid transparent;
+          background:${darkMode ? "#101522" : "#fff"};
+          color:${darkMode ? "#fff" : "#111"};
+          font-size:15px;
         }
 
-        .form-box {
-          width: 320px;
-          padding: 35px;
-          backdrop-filter: blur(10px);
-          border-radius: 14px;
-          background: ${
-            darkMode ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.35)"
-          };
-        }
-
-        .title {
-          text-align: center;
-          font-size: 28px;
-          font-weight: 600;
-          color: ${darkMode ? "white" : "#E63946"};
-          margin-bottom: 30px;
-        }
-
-        .field {
-          width: 100%;
-          position: relative;
-          margin-bottom: 32px;
-        }
-
-        .input {
-          width: 100%;
-          padding: 10px 5px;
-          font-size: 16px;
-          color: ${darkMode ? "white" : "#222"};
-        }
-
-        .label {
-          position: absolute;
-          left: 5px;
-          top: 10px;
-          font-size: 15px;
-          color: #999;
-          pointer-events: none;
-          transition: 0.25s;
-        }
-
-        .input:focus + .label,
-        .input:not(:placeholder-shown) + .label {
-          top: -8px;
-          font-size: 12px;
-          color: #E63946;
-        }
-
-        .base-line {
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          width: 100%;
-          height: 1px;
-          background: ${darkMode ? "#777" : "rgba(0,0,0,0.3)"};
-        }
-
-        .underline {
-          position: absolute;
-          bottom: 0;
-          left: 50%;
-          width: 0%;
-          transform: translateX(-50%);
-          height: 1px;
-          background: #E63946;
-          transition: width .35s ease-in-out;
-        }
-
-        .input:focus ~ .underline {
-          width: 100%;
-        }
-
-        .btn {
-          width: 100%;
-          padding: 14px;
-          background: #E63946;
-          color: white;
-          font-size: 17px;
-          border: none;
-          border-radius: 8px;
-          cursor: pointer;
-          margin-top: 5px;
-          transition: .25s;
-        }
-
-        .btn:hover {
-          background: #c92f38;
+        input:focus {
+          outline:none;
+          border-color:#E63946;
+          box-shadow:0 0 0 3px rgba(230,57,70,.25);
         }
 
         .error {
-          color: #E63946;
-          text-align: center;
-          font-size: 14px;
-          margin-bottom: 10px;
+          text-align:center;
+          color:#E63946;
+          margin-bottom:14px;
+          font-size:14px;
         }
+
+        button {
+          width:100%;
+          padding:14px;
+          border:none;
+          border-radius:12px;
+          background:linear-gradient(135deg,#E63946,#ff758f);
+          color:#fff;
+          font-size:16px;
+          cursor:pointer;
+          transition:.3s;
+        }
+
+        button:hover { transform: translateY(-1px); }
+        button:disabled { opacity:.7; cursor:not-allowed }
 
         .footer {
-          text-align: center;
-          margin-top: 20px;
-          font-size: 14px;
-          color: ${darkMode ? "#ccc" : "#444"};
+          margin-top:20px;
+          text-align:center;
+          font-size:14px;
+          color:${darkMode ? "#bbb" : "#444"};
         }
 
-        .footer a {
-          color: #E63946;
-          font-weight: 600;
-          text-decoration: none;
+        a {
+          color:#E63946;
+          font-weight:600;
+          text-decoration:none;
         }
       `}</style>
 
-      <div className="wrapper">
-        <form className="form-box" onSubmit={handleSignup} autoComplete="off">
-          <h1 className="title">Create Account </h1>
+      <div className="page">
+        <form className="card" onSubmit={handleSignup}>
+          <h1>Create Account</h1>
 
-          {error && <p className="error">{error}</p>}
+          {error && <div className="error">{error}</div>}
 
-          {/* Name */}
-          <div className="field">
-            <input
-              className="input"
-              type="text"
-              placeholder=" "
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-            />
-            <label className="label">Full Name</label>
-            <span className="base-line"></span>
-            <span className="underline"></span>
+          <div className="group">
+            <input name="name" placeholder="Full Name" onChange={handleChange} />
           </div>
 
-          {/* Email */}
-          <div className="field">
-            <input
-              className="input"
-              type="email"
-              placeholder=" "
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-            />
-            <label className="label">Email</label>
-            <span className="base-line"></span>
-            <span className="underline"></span>
+          <div className="group">
+            <input name="email" placeholder="Email" onChange={handleChange} />
           </div>
 
-          {/* Password */}
-          <div className="field">
-            <input
-              className="input"
-              type="password"
-              placeholder=" "
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-            />
-            <label className="label">Password</label>
-            <span className="base-line"></span>
-            <span className="underline"></span>
+          <div className="group">
+            <input type="password" name="password" placeholder="Password" onChange={handleChange} />
           </div>
 
-          {/* Confirm Password */}
-          <div className="field">
-            <input
-              className="input"
-              type="password"
-              placeholder=" "
-              value={form.confirm}
-              onChange={(e) => setForm({ ...form, confirm: e.target.value })}
-            />
-            <label className="label">Confirm Password</label>
-            <span className="base-line"></span>
-            <span className="underline"></span>
+          <div className="group">
+            <input type="password" name="confirm" placeholder="Confirm Password" onChange={handleChange} />
           </div>
 
-          <button className="btn">Sign Up</button>
+          <button disabled={loading}>
+            {loading ? "Creating Account..." : "Sign Up"}
+          </button>
 
-          <p className="footer">
-            Already have an account? <Link to="/login">Login</Link>
-          </p>
+          <div className="footer">
+            Already registered? <Link to="/login">Login</Link>
+          </div>
         </form>
       </div>
     </>

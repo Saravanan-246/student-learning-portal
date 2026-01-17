@@ -1,15 +1,35 @@
-import { useAuth } from "../context/AuthContext.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Profile() {
-  const { user, logout } = useAuth();
   const { darkMode } = useTheme();
+  const navigate = useNavigate();
+
+  // 🔐 JWT-BASED AUTH (REPLACED useAuth)
+  const storedUser = JSON.parse(localStorage.getItem("studentUser"));
+  const token = localStorage.getItem("studentToken");
+
+  const [user, setUser] = useState(storedUser);
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState({
-    name: user?.name || "",
-    email: user?.email || "",
+    name: storedUser?.name || "",
+    email: storedUser?.email || "",
   });
+
+  // 🔐 AUTH GUARD
+  useEffect(() => {
+    if (!token) {
+      navigate("/login", { replace: true });
+    }
+  }, [token, navigate]);
+
+  // 🚪 LOGOUT (JWT)
+  const logout = () => {
+    localStorage.removeItem("studentToken");
+    localStorage.removeItem("studentUser");
+    navigate("/login", { replace: true });
+  };
 
   // Dynamic theme colors
   const theme = {
@@ -25,7 +45,7 @@ export default function Profile() {
     highlightBorder: darkMode ? "#FF5555" : "#FECACA"
   };
 
-  // Professional SVG Icons
+  // Icons (UNCHANGED)
   const UserIcon = () => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -68,8 +88,16 @@ export default function Profile() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // 💾 SAVE (LOCAL ONLY)
   const handleSave = () => {
-    console.log("Saving profile:", formData);
+    const updatedUser = {
+      ...user,
+      name: formData.name,
+      email: formData.email,
+    };
+
+    localStorage.setItem("studentUser", JSON.stringify(updatedUser));
+    setUser(updatedUser);
     setEditMode(false);
   };
 
@@ -336,20 +364,15 @@ export default function Profile() {
       `}</style>
 
       <div className="profile-container">
-        {/* Header */}
         <div className="profile-header">
           <div className="title-accent" />
           <h1 className="profile-title">Student Profile</h1>
-          <p className="profile-subtitle">
-            Manage your account information.
-          </p>
+          <p className="profile-subtitle">Manage your account information.</p>
         </div>
 
-        {/* Profile Card */}
         <div className="profile-card">
           <div className="card-title">
-            <div className="card-title-icon"><UserIcon /></div>
-            Account Information
+            <UserIcon /> Account Information
           </div>
 
           {editMode ? (
@@ -357,37 +380,35 @@ export default function Profile() {
               <div className="form-group">
                 <label className="form-label">Full Name</label>
                 <input
-                  type="text"
+                  className="form-input"
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  className="form-input"
-                  placeholder="Enter your name"
                 />
               </div>
 
               <div className="form-group">
-                <label className="form-label">Email Address</label>
+                <label className="form-label">Email</label>
                 <input
-                  type="email"
+                  className="form-input"
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="form-input"
-                  placeholder="Enter your email"
                 />
               </div>
 
               <div className="btn-group">
                 <button className="btn btn-primary" onClick={handleSave}>
-                  <SaveIcon />
-                  Save Changes
+                  <SaveIcon /> Save Changes
                 </button>
-                <button 
-                  className="btn btn-secondary" 
+                <button
+                  className="btn btn-secondary"
                   onClick={() => {
                     setEditMode(false);
-                    setFormData({ name: user?.name || "", email: user?.email || "" });
+                    setFormData({
+                      name: user?.name || "",
+                      email: user?.email || "",
+                    });
                   }}
                 >
                   Cancel
@@ -399,33 +420,23 @@ export default function Profile() {
               <div className="form-group">
                 <label className="form-label">Full Name</label>
                 <div className="info-display">
-                  <div className="info-icon"><UserIcon /></div>
-                  {user?.name || "Not Set"}
+                  <UserIcon /> {user?.name || "Not Set"}
                 </div>
               </div>
 
               <div className="form-group">
-                <label className="form-label">Email Address</label>
+                <label className="form-label">Email</label>
                 <div className="info-display">
-                  <div className="info-icon"><MailIcon /></div>
-                  {user?.email || "Not Set"}
+                  <MailIcon /> {user?.email || "Not Set"}
                 </div>
               </div>
 
               <div className="btn-group">
-                <button 
-                  className="btn btn-primary" 
-                  onClick={() => setEditMode(true)}
-                >
-                  <EditIcon />
-                  Edit Profile
+                <button className="btn btn-primary" onClick={() => setEditMode(true)}>
+                  <EditIcon /> Edit Profile
                 </button>
-                <button 
-                  className="btn btn-danger" 
-                  onClick={logout}
-                >
-                  <LogoutIcon />
-                  Logout
+                <button className="btn btn-danger" onClick={logout}>
+                  <LogoutIcon /> Logout
                 </button>
               </div>
             </>

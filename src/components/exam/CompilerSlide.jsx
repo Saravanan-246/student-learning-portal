@@ -1,55 +1,57 @@
-export default function CompilerSlide({ next, back }) {
+import { useEffect, useState } from "react";
+
+export default function CompilerSlide({ question, value, onSave, next, back }) {
+  const [code, setCode] = useState(value || question.starterCode || "");
+  const [output, setOutput] = useState("");
+
+  useEffect(() => {
+    setCode(value || question.starterCode || "");
+  }, [value, question.starterCode]);
+
+  const runCode = () => {
+    if (!code.trim()) {
+      setOutput("❌ Error: No code written");
+      return;
+    }
+
+    // TEMP MOCK COMPILER (for testing flow)
+    if (code.includes("System.out.println")) {
+      setOutput("✅ Program executed successfully\nHello World");
+    } else {
+      setOutput("❌ Compilation Error: Missing print statement");
+    }
+
+    onSave(code); // save code answer
+  };
+
   return (
-    <>
-      <style>{`
-        .grid {
-          width: 90%;
-          max-width: 900px;
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 20px;
-        }
+    <div>
+      <textarea
+        className="compiler-textarea"
+        value={code}
+        onChange={(e) => setCode(e.target.value)}
+        placeholder="// Write your code here..."
+        rows={14}
+      />
 
-        textarea {
-          width: 100%;
-          height: 350px;
-          border-radius: 12px;
-          padding: 15px;
-          border: 2px solid #ddd;
-          font-size: 15px;
-          resize: none;
-        }
+      <button className="submit-btn" onClick={runCode}>
+        Run Code
+      </button>
 
-        button {
-          margin-top: 20px;
-          padding: 15px 35px;
-          border-radius: 10px;
-          font-size: 18px;
-          cursor: pointer;
-          transition: .3s;
-        }
+      {output && (
+        <pre style={{ marginTop: "16px", opacity: 0.9 }}>
+          {output}
+        </pre>
+      )}
 
-        .next {
-          background: #E63946;
-          color: white;
-        }
-
-        .back {
-          background: #ddd;
-          margin-right: 10px;
-        }
-      `}</style>
-
-      <div className="grid">
-        <textarea placeholder="// Code here..."></textarea>
-
-        <textarea placeholder="Output will appear here..." disabled />
+      <div style={{ display: "flex", gap: "12px", marginTop: "24px" }}>
+        <button className="submit-btn" onClick={back}>
+          ⬅ Back
+        </button>
+        <button className="submit-btn" onClick={next}>
+          Next →
+        </button>
       </div>
-
-      <div>
-        <button className="back" onClick={back}>⬅ Back</button>
-        <button className="next" onClick={next}>Next →</button>
-      </div>
-    </>
+    </div>
   );
 }
