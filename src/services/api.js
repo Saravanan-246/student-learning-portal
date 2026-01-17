@@ -14,21 +14,13 @@ export const apiFetch = async (url, options = {}) => {
     },
   });
 
-  // ✅ No content
-  if (res.status === 204) return null;
-
-  let data = null;
+  let data;
   try {
     data = await res.json();
   } catch {}
 
-  // ❌ Error handling
   if (!res.ok) {
-    const error = new Error(
-      data?.message || `Request failed with status ${res.status}`
-    );
-    error.status = res.status;
-    throw error;
+    throw new Error(data?.message || "API error");
   }
 
   return data;
