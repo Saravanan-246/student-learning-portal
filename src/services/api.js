@@ -3,9 +3,7 @@ const API_BASE =
   "https://classroom-backend-s22x.onrender.com/api";
 
 export const apiFetch = async (url, options = {}) => {
-  const token =
-    localStorage.getItem("adminToken") ||
-    localStorage.getItem("studentToken");
+  const token = localStorage.getItem("studentToken");
 
   const res = await fetch(`${API_BASE}${url}`, {
     ...options,
@@ -16,15 +14,21 @@ export const apiFetch = async (url, options = {}) => {
     },
   });
 
+  // ✅ No content
   if (res.status === 204) return null;
 
-  let data;
+  let data = null;
   try {
     data = await res.json();
   } catch {}
 
+  // ❌ Error handling
   if (!res.ok) {
-    throw new Error(data?.message || "API error");
+    const error = new Error(
+      data?.message || `Request failed with status ${res.status}`
+    );
+    error.status = res.status;
+    throw error;
   }
 
   return data;
