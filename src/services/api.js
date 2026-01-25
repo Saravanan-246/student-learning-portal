@@ -1,10 +1,13 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL;
+// DEV MODE API WRAPPER
+// If backend is not configured, this will NOT crash the app
 
-if (!API_BASE) {
-  throw new Error("❌ VITE_API_BASE_URL is not defined");
-}
+const API_BASE = import.meta.env.VITE_API_BASE_URL || null;
 
 export const apiFetch = async (url, options = {}) => {
+  if (!API_BASE) {
+    throw new Error("API not configured (DEV MODE)");
+  }
+
   const token =
     localStorage.getItem("adminToken") ||
     localStorage.getItem("studentToken");

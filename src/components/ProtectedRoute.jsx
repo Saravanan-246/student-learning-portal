@@ -1,10 +1,13 @@
 import { Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export default function ProtectedRoute({ children }) {
-  const token = localStorage.getItem("studentToken");
+  const { user } = useAuth();
 
-  // 🔐 Not logged in
-  if (!token) {
+  // 🔑 Fallback for first render
+  const storedUser = localStorage.getItem("studentUser");
+
+  if (!user && !storedUser) {
     return <Navigate to="/login" replace />;
   }
 

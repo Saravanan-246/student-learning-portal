@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
 const AuthContext = createContext(null);
@@ -8,10 +8,15 @@ export const useAuth = () => useContext(AuthContext);
 export function AuthProvider({ children }) {
   const navigate = useNavigate();
 
-  // ✅ RESTORE USER ON FIRST LOAD (SYNC)
+  // ✅ RESTORE USER ON FIRST LOAD (SAFE)
   const [user, setUser] = useState(() => {
-    const stored = localStorage.getItem("studentUser");
-    return stored ? JSON.parse(stored) : null;
+    try {
+      const stored = localStorage.getItem("studentUser");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      localStorage.removeItem("studentUser");
+      return null;
+    }
   });
 
   // ✅ LOGIN
@@ -27,16 +32,15 @@ export function AuthProvider({ children }) {
     navigate("/login", { replace: true });
   };
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        login,
-        logout,
-        isLogged: Boolean(user),
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo(
+    () => ({
+      user,
+      login,
+      logout,
+      isLogged: Boolean(user),
+    }),
+    [user]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

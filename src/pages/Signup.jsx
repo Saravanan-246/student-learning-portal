@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { useTheme } from "../context/ThemeContext";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.jsx";
+import { useTheme } from "../context/ThemeContext.jsx";
 import "./Signup.css";
 
 export default function Signup() {
@@ -21,93 +21,119 @@ export default function Signup() {
   const handleSignup = (e) => {
     e.preventDefault();
 
-    if (!form.name || !form.email || !form.password || !form.confirm) {
-      setError("All fields are required");
+    const name = form.name.trim();
+    const email = form.email.trim().toLowerCase();
+    const password = form.password;
+    const confirm = form.confirm;
+
+    if (!name || !email || !password || !confirm) {
+      setError("All fields are required ❗");
       return;
     }
 
-    if (form.password !== form.confirm) {
-      setError("Passwords do not match");
+    if (password !== confirm) {
+      setError("Passwords do not match ❌");
       return;
     }
 
     const users = JSON.parse(localStorage.getItem("students")) || [];
 
-    if (users.some((u) => u.email === form.email.trim())) {
-      setError("Email already exists");
+    if (users.some((u) => u.email === email)) {
+      setError("This email already exists ⚠");
       return;
     }
 
-    const newUser = {
-      name: form.name.trim(),
-      email: form.email.trim(),
-      password: form.password,
-    };
+    const newUser = { name, email, password };
 
-    // ✅ Save user list
+    // ✅ Save users list
     localStorage.setItem("students", JSON.stringify([...users, newUser]));
 
-    // ✅ IMPORTANT: Persist logged-in user
+    // ✅ Persist logged-in user
     localStorage.setItem("studentUser", JSON.stringify(newUser));
     login(newUser);
 
+    // ✅ Redirect to dashboard and stay there
     navigate("/dashboard", { replace: true });
   };
 
   return (
-    <div className={`signup-wrap ${darkMode ? "dark" : ""}`}>
-      <form className="signup-panel" onSubmit={handleSignup}>
-        <span className="badge">CREATE</span>
-        <h2>Create Account</h2>
-        <p className="hint">Join Dev Portal and get started</p>
+    <div className={`wrapper ${darkMode ? "dark" : ""}`}>
+      <form className="form-box" onSubmit={handleSignup} autoComplete="off">
+        <h1 className="title">Create Account</h1>
 
-        {error && <div className="error">{error}</div>}
+        {error && <p className="error">{error}</p>}
 
-        <input
-          type="text"
-          placeholder="Full Name"
-          value={form.name}
-          required
-          onChange={(e) => {
-            setForm({ ...form, name: e.target.value });
-            setError("");
-          }}
-        />
+        <div className="field">
+          <input
+            className="input"
+            type="text"
+            placeholder=" "
+            value={form.name}
+            required
+            onChange={(e) => {
+              setForm({ ...form, name: e.target.value });
+              setError("");
+            }}
+          />
+          <label className="label">Full Name</label>
+          <span className="base-line"></span>
+          <span className="underline"></span>
+        </div>
 
-        <input
-          type="email"
-          placeholder="Email Address"
-          value={form.email}
-          required
-          onChange={(e) => {
-            setForm({ ...form, email: e.target.value });
-            setError("");
-          }}
-        />
+        <div className="field">
+          <input
+            className="input"
+            type="email"
+            placeholder=" "
+            value={form.email}
+            required
+            onChange={(e) => {
+              setForm({ ...form, email: e.target.value });
+              setError("");
+            }}
+          />
+          <label className="label">Email</label>
+          <span className="base-line"></span>
+          <span className="underline"></span>
+        </div>
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={form.password}
-          required
-          onChange={(e) => {
-            setForm({ ...form, password: e.target.value });
-            setError("");
-          }}
-        />
+        <div className="field">
+          <input
+            className="input"
+            type="password"
+            placeholder=" "
+            value={form.password}
+            required
+            onChange={(e) => {
+              setForm({ ...form, password: e.target.value });
+              setError("");
+            }}
+          />
+          <label className="label">Password</label>
+          <span className="base-line"></span>
+          <span className="underline"></span>
+        </div>
 
-        <input
-          type="password"
-          placeholder="Confirm Password"
-          value={form.confirm}
-          required
-          onChange={(e) => {
-            setForm({ ...form, confirm: e.target.value });
-            setError("");
-          }}
-        />
+        <div className="field">
+          <input
+            className="input"
+            type="password"
+            placeholder=" "
+            value={form.confirm}
+            required
+            onChange={(e) => {
+              setForm({ ...form, confirm: e.target.value });
+              setError("");
+            }}
+          />
+          <label className="label">Confirm Password</label>
+          <span className="base-line"></span>
+          <span className="underline"></span>
+        </div>
 
-        <button type="submit">Create Account</button>
+        <button className="btn" type="submit">
+          Sign Up
+        </button>
 
         <p className="footer">
           Already have an account? <Link to="/login">Login</Link>

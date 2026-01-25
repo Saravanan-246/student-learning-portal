@@ -16,10 +16,18 @@ export default function Login() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    const emailValue = email.trim().toLowerCase();
+    const passwordValue = password;
+
+    if (!emailValue || !passwordValue) {
+      setError("Email and password are required");
+      return;
+    }
+
     const users = JSON.parse(localStorage.getItem("students")) || [];
 
     const user = users.find(
-      (u) => u.email === email.trim() && u.password === password
+      (u) => u.email === emailValue && u.password === passwordValue
     );
 
     if (!user) {
@@ -27,10 +35,11 @@ export default function Login() {
       return;
     }
 
-    // ✅ IMPORTANT: Persist logged-in user
+    // ✅ Persist logged-in user
     localStorage.setItem("studentUser", JSON.stringify(user));
     login(user);
 
+    // ✅ Go to dashboard and stay there
     navigate("/dashboard", { replace: true });
   };
 
@@ -47,7 +56,7 @@ export default function Login() {
 
       {/* RIGHT SECTION */}
       <div className="login-right">
-        <form className="login-box" onSubmit={handleSubmit}>
+        <form className="login-box" onSubmit={handleSubmit} autoComplete="off">
           <h2>Sign in to your account</h2>
           <p className="subtitle">Enter your credentials to continue</p>
 
