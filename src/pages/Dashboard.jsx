@@ -1,10 +1,16 @@
-import { useAuth } from "../context/AuthContext.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
 import { useRef } from "react";
 
 export default function Dashboard() {
-  const { user } = useAuth();
   const { darkMode } = useTheme();
+
+  // 🔐 JWT-BASED USER
+  const user = JSON.parse(localStorage.getItem("studentUser"));
+
+  // 🔐 SAFETY GUARD
+  if (!user) {
+    return null;
+  }
 
   const sectionRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
 
@@ -19,7 +25,7 @@ export default function Dashboard() {
     secondary: darkMode ? "#8B949E" : "#6B7280",
     accent: "#DC2626",
     border: darkMode ? "#30363D" : "#E5E7EB",
-    highlight: "#FEE2E2"
+    highlight: "#FEE2E2",
   };
 
   // Professional SVG Icons

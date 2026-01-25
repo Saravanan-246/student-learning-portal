@@ -1,0 +1,265 @@
+/* ================= PAGE ================= */
+.exam-page {
+  min-height: 100vh;
+  padding: 3rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #f8fafc;
+  color: #1f2937;
+  transition: 0.3s;
+}
+
+.exam-page.dark {
+  background: #0d1117;
+  color: #e5e7eb;
+}
+
+/* ================= HEADER ================= */
+.exam-title {
+  font-size: 2.4rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #dc2626, #991b1b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.exam-sub {
+  margin-top: 8px;
+  opacity: 0.85;
+}
+
+/* ================= QUESTION LIST ================= */
+.question-list {
+  width: 100%;
+  max-width: 750px;
+  margin-top: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+/* ================= QUESTION CARD ================= */
+.question-card {
+  background: #ffffff;
+  padding: 22px;
+  border-radius: 18px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: popIn 0.45s ease;
+  transition: 0.3s;
+  box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.05);
+}
+
+.exam-page.dark .question-card {
+  background: #161b22;
+  border-color: #30363d;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+
+.question-card:hover {
+  transform: translateY(-4px);
+}
+
+/* ================= ANIMATION ================= */
+@keyframes popIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ================= QUESTION TEXT ================= */
+.question-text {
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* ================= OPTIONS ================= */
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.option:hover {
+  background: #f1f5f9;
+}
+
+.exam-page.dark .option:hover {
+  background: #1f2937;
+}
+
+.option input {
+  accent-color: #dc2626;
+}
+
+/* ================= SUBMIT BUTTON ================= */
+.submit-btn {
+  margin-top: 3rem;
+  background: #dc2626;
+  color: white;
+  padding: 14px 30px;
+  border-radius: 14px;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.submit-btn:hover {
+  background: #b8232c;
+  transform: scale(1.05);
+}
+/* ================= COMPILER CONTAINER ================= */
+.compiler-box {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ================= CODE EDITOR ================= */
+.compiler-textarea {
+  width: 100%;
+  min-height: 260px;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  background: #f8fafc;
+  color: #0f172a;
+  resize: vertical;
+  transition: 0.25s;
+}
+
+.exam-page.dark .compiler-textarea {
+  background: #0d1117;
+  color: #e5e7eb;
+  border-color: #30363d;
+}
+
+.compiler-textarea:focus {
+  outline: none;
+  border-color: #dc2626;
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.15);
+}
+
+/* ================= RUN BUTTON ================= */
+.compiler-run {
+  align-self: flex-start;
+  background: #2563eb;
+  color: white;
+  padding: 10px 22px;
+  border-radius: 12px;
+  border: none;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.compiler-run:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+/* ================= OUTPUT PANEL ================= */
+.compiler-output {
+  background: #f1f5f9;
+  border-radius: 14px;
+  padding: 14px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 13px;
+  white-space: pre-wrap;
+  color: #0f172a;
+}
+
+.exam-page.dark .compiler-output {
+  background: #161b22;
+  color: #e5e7eb;
+  border: 1px solid #30363d;
+}
+
+/* ================= NAV BUTTONS ================= */
+.compiler-nav {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.compiler-nav button {
+  background: #dc2626;
+  color: white;
+  padding: 12px 26px;
+  border-radius: 14px;
+  border: none;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.compiler-nav button:hover {
+  background: #b8232c;
+  transform: scale(1.05);
+}
+.exam-header {
+  margin-bottom: 20px;
+}
+
+.progress-bar {
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #dc2626;
+  transition: width 0.3s ease;
+}
+
+.option.selected {
+  border-color: #dc2626;
+  background: rgba(220, 38, 38, 0.08);
+}
+
+.exam-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.submit-btn.secondary {
+  background: #374151;
+}
+
+.submit-btn.success {
+  background: #16a34a;
+}
+
+.exam-footer {
+  margin-top: 16px;
+  text-align: center;
+  opacity: 0.75;
+}

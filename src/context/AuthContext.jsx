@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const AuthContext = createContext();
@@ -7,29 +7,34 @@ export const useAuth = () => useContext(AuthContext);
 
 export function AuthProvider({ children }) {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
 
-  // Load saved session on refresh
-  useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("studentUser") || "null");
-    if (stored) setUser(stored);
-  }, []);
+  // ✅ Load user synchronously (IMPORTANT)
+  const [user, setUser] = useState(() => {
+    return JSON.parse(localStorage.getItem("user")) || null;
+  });
 
-  // Login
+  // ✅ LOGIN
   const login = (data) => {
-    setUser(data);
-    localStorage.setItem("studentUser", JSON.stringify(data));
+    localStorage.setItem("user", JSON.stringify(data)); // FIRST
+    setUser(data); // THEN state
   };
 
-  // Logout
+  // ✅ LOGOUT
   const logout = () => {
+    localStorage.removeItem("user");
     setUser(null);
-    localStorage.removeItem("studentUser");
     navigate("/login", { replace: true });
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLogged: !!user }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        logout,
+        isLogged: !!user,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

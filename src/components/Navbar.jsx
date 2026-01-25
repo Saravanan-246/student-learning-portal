@@ -1,13 +1,26 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import ThemeToggle from "./ThemeToggle.jsx";
-import { useAuth } from "../context/AuthContext.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
 
 export default function Navbar() {
-  const { user, logout } = useAuth();
   const { darkMode } = useTheme();
   const navigate = useNavigate();
   const { pathname } = useLocation();
+
+  // 🔐 JWT AUTH
+  const user = JSON.parse(localStorage.getItem("studentUser"));
+
+// 🔐 SAFETY GUARD
+if (!user) {
+  return null;
+}
+
+
+  const logout = () => {
+    localStorage.removeItem("studentToken");
+    localStorage.removeItem("studentUser");
+    navigate("/login", { replace: true });
+  };
 
   const links = [
     { label: "Dashboard", path: "/dashboard" },
@@ -271,7 +284,7 @@ export default function Navbar() {
             if (underline) underline.style.width = '0%';
           }}
         >
-          Portal
+          Student Portal
           <div style={brandUnderline} data-underline />
         </span>
 

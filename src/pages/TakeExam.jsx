@@ -1,90 +1,210 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useTheme } from "../context/ThemeContext.jsx";
-import { useAuth } from "../context/AuthContext.jsx";
+import { apiFetch } from "../services/api";
+import CompilerSlide from "../components/exam/CompilerSlide";
+import "../styles/TakeExam.css";
 
 export default function TakeExam() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { darkMode } = useTheme();
-  const { user } = useAuth();
 
   const [exam, setExam] = useState(null);
   const [answers, setAnswers] = useState({});
+  const [current, setCurrent] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
+  /* 🔐 AUTH GUARD (JWT) */
   useEffect(() => {
-    const storedExams = JSON.parse(localStorage.getItem("exams") || "[]");
-    const match = storedExams.find((e) => e.id === id);
-    setExam(match);
-  }, [id]);
+    const token = localStorage.getItem("studentToken");
+    if (!token) {
+      navigate("/login", { replace: true });
+    }
+  }, [navigate]);
 
-  const saveAnswer = (qId, value) => {
-    setAnswers((prev) => ({ ...prev, [qId]: value }));
-  };
+  /* ================= LOAD EXAM ================= */
+  useEffect(() => {
+    const loadExam = async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-  const submitExam = () => {
-    const responses = JSON.parse(localStorage.getItem("responses") || "[]");
+        const data = await apiFetch(`/exams/${id}`);
 
-    const entry = {
-      student: user.email,
-      examId: id,
-      answers,
-      submittedAt: new Date().toISOString(),
+        if (!data || !Array.isArray(data.questions)) {
+          throw new Error("Invalid exam data");
+        }
+
+        setExam(data);
+
+        const saved = JSON.parse(
+          localStorage.getItem(`exam_${id}_answers`) || "{}"
+        );
+        setAnswers(saved);
+      } catch (err) {
+        console.error("Failed to load exam:", err);
+
+        // 🔐 TOKEN INVALID / EXPIRED
+        if (
+          err.message?.toLowerCase().includes("unauthorized") ||
+          err.message?.toLowerCase().includes("token")
+        ) {
+          localStorage.removeItem("studentToken");
+          navigate("/login", { replace: true });
+          return;
+        }
+
+        setError("Unable to load exam");
+        navigate("/exams", { replace: true });
+      } finally {
+        setLoading(false);
+      }
     };
 
-    localStorage.setItem("responses", JSON.stringify([...responses, entry]));
+    loadExam();
+  }, [id, navigate]);
 
-    navigate("/results");
+  /* ================= SAVE ANSWER ================= */
+  const saveAnswer = (qIndex, value) => {
+    const updated = { ...answers, [qIndex]: value };
+    setAnswers(updated);
+    localStorage.setItem(`exam_${id}_answers`, JSON.stringify(updated));
   };
 
-  if (!exam)
-    return <p className="p-10 text-gray-500">Loading exam...</p>;
+  /* ================= SUBMIT ================= */
+  const submitExam = async () => {
+    try {
+      await apiFetch("/responses", {
+        method: "POST",
+        body: JSON.stringify({
+          examId: id,
+          answers,
+        }),
+      });
+
+      localStorage.removeItem(`exam_${id}_answers`);
+      navigate("/results");
+    } catch (err) {
+      if (
+        err.message?.toLowerCase().includes("unauthorized") ||
+        err.message?.toLowerCase().includes("token")
+      ) {
+        localStorage.removeItem("studentToken");
+        navigate("/login", { replace: true });
+        return;
+      }
+
+      alert(err.message || "Submission failed");
+    }
+  };
+
+  /* ===== STATES ===== */
+  if (loading) {
+    return <p style={{ padding: "2rem" }}>Loading exam...</p>;
+  }
+
+  if (error) {
+    return <p style={{ padding: "2rem", color: "red" }}>{error}</p>;
+  }
+
+  if (!exam) return null;
+
+  const total = exam.questions.length;
+  const question = exam.questions[current];
+  const answeredCount = Object.keys(answers).length;
+  const isLast = current === total - 1;
+  const canSubmit = answeredCount === total;
 
   return (
-    <div
-      className={`min-h-screen p-8 ${
-        darkMode ? "bg-[#0D1117] text-white" : "bg-[#FAFBFC] text-gray-900"
-      }`}
-    >
-      <h1 className="text-2xl font-semibold">{exam.title}</h1>
-      <p className="opacity-70 mt-1">{exam.questions?.length} Questions</p>
+    <div className={`exam-page ${darkMode ? "dark" : ""}`}>
+      {/* ===== HEADER ===== */}
+      <div className="exam-header">
+        <h1 className="exam-title">{exam.title}</h1>
+        <p className="exam-sub">
+          Question <strong>{current + 1}</strong> of {total}
+        </p>
 
-      <div className="mt-8 space-y-6 max-w-2xl">
-        {exam.questions.map((q, index) => (
+        <div className="progress-bar">
           <div
-            key={q.id}
-            className={`p-5 rounded-xl border shadow ${
-              darkMode ? "bg-[#161B22] border-[#30363D]" : "bg-white border-gray-200"
-            }`}
-          >
-            <p className="font-medium mb-3">
-              {index + 1}. {q.question}
-            </p>
-
-            <div className="grid gap-2 mt-3">
-              {q.options.map((opt) => (
-                <label key={opt} className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="radio"
-                    name={q.id}
-                    value={opt}
-                    checked={answers[q.id] === opt}
-                    onChange={() => saveAnswer(q.id, opt)}
-                  />
-                  {opt}
-                </label>
-              ))}
-            </div>
-          </div>
-        ))}
+            className="progress-fill"
+            style={{
+              width: `${((current + 1) / total) * 100}%`,
+            }}
+          />
+        </div>
       </div>
 
-      <button
-        onClick={submitExam}
-        className="mt-10 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-lg"
-      >
-        Submit Exam
-      </button>
+      {/* ===== QUESTION ===== */}
+      <div className="question-list">
+        <div className="question-card">
+          <p className="question-text">
+            <span className="q-no">{current + 1}.</span>{" "}
+            {question?.question || "Question missing"}
+          </p>
+
+          {question?.type === "code" ? (
+            <CompilerSlide
+              question={question}
+              value={answers[current]}
+              onSave={(code) => saveAnswer(current, code)}
+              back={() => setCurrent((c) => Math.max(c - 1, 0))}
+              next={() =>
+                setCurrent((c) => Math.min(c + 1, total - 1))
+              }
+            />
+          ) : (
+            <div className="options">
+              {(question?.options || []).map((opt, i) => {
+                const selected = answers[current] === opt;
+                return (
+                  <label
+                    key={`${current}-${i}`}
+                    className={`option ${selected ? "selected" : ""}`}
+                    onClick={() => saveAnswer(current, opt)}
+                  >
+                    <input type="radio" checked={selected} readOnly />
+                    <span>{opt}</span>
+                  </label>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ===== NAV ===== */}
+      <div className="exam-nav">
+        <button
+          className="submit-btn secondary"
+          disabled={current === 0}
+          onClick={() => setCurrent((c) => c - 1)}
+        >
+          ⬅ Back
+        </button>
+
+        {!isLast ? (
+          <button
+            className="submit-btn"
+            onClick={() => setCurrent((c) => c + 1)}
+          >
+            Save & Next →
+          </button>
+        ) : (
+          <button
+            className="submit-btn success"
+            disabled={!canSubmit}
+            onClick={submitExam}
+          >
+            Submit Exam
+          </button>
+        )}
+      </div>
+
+      <p className="exam-footer">
+        Answered {answeredCount} / {total}
+      </p>
     </div>
   );
 }
