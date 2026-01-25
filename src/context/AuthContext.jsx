@@ -1,27 +1,28 @@
 import { createContext, useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 export const useAuth = () => useContext(AuthContext);
 
 export function AuthProvider({ children }) {
   const navigate = useNavigate();
 
-  // ✅ Load user synchronously (IMPORTANT)
+  // ✅ RESTORE USER ON FIRST LOAD (SYNC)
   const [user, setUser] = useState(() => {
-    return JSON.parse(localStorage.getItem("user")) || null;
+    const stored = localStorage.getItem("studentUser");
+    return stored ? JSON.parse(stored) : null;
   });
 
   // ✅ LOGIN
-  const login = (data) => {
-    localStorage.setItem("user", JSON.stringify(data)); // FIRST
-    setUser(data); // THEN state
+  const login = (userData) => {
+    localStorage.setItem("studentUser", JSON.stringify(userData));
+    setUser(userData);
   };
 
   // ✅ LOGOUT
   const logout = () => {
-    localStorage.removeItem("user");
+    localStorage.removeItem("studentUser");
     setUser(null);
     navigate("/login", { replace: true });
   };
@@ -32,7 +33,7 @@ export function AuthProvider({ children }) {
         user,
         login,
         logout,
-        isLogged: !!user,
+        isLogged: Boolean(user),
       }}
     >
       {children}
