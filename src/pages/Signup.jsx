@@ -44,9 +44,14 @@ export default function Signup() {
       password: form.password,
     };
 
+    // ✅ Save user list
     localStorage.setItem("students", JSON.stringify([...users, newUser]));
+
+    // ✅ IMPORTANT: Persist logged-in user
+    localStorage.setItem("studentUser", JSON.stringify(newUser));
     login(newUser);
-    navigate("/dashboard");
+
+    navigate("/dashboard", { replace: true });
   };
 
   return (

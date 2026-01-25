@@ -27,8 +27,11 @@ export default function Login() {
       return;
     }
 
+    // ✅ IMPORTANT: Persist logged-in user
+    localStorage.setItem("studentUser", JSON.stringify(user));
     login(user);
-    navigate("/dashboard");
+
+    navigate("/dashboard", { replace: true });
   };
 
   return (
